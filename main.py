@@ -136,18 +136,55 @@ class Card(QWidget):
         self.label_4.setText("Uncapped")
         self.label_5.setText("Capped")
 
-        self.vp1.textChanged.connect(self.recalcAll)
-        self.vp2.textChanged.connect(self.recalcAll)
-        self.vp3.textChanged.connect(self.recalcAll)
-        self.vp4.textChanged.connect(self.recalcAll)
-        self.m1.textChanged.connect(self.recalcAll)
-        self.m2.textChanged.connect(self.recalcAll)
-        self.m3.textChanged.connect(self.recalcAll)
-        self.m4.textChanged.connect(self.recalcAll)
-        self.mvp1.textChanged.connect(self.recalcAll)
-        self.mvp2.textChanged.connect(self.recalcAll)
-        self.mvp3.textChanged.connect(self.recalcAll)
-        self.mvp4.textChanged.connect(self.recalcAll)
+        self.allEditableFields = [self.teamName, self.player1, self.player2, self.player3, self.player4, self.vp1, self.vp2, self.vp3, self.vp4, self.m1, self.m2, self.m3, self.m4, self.mvp1, self.mvp2, self.mvp3, self.mvp4]
+
+        self.teamName.textEdited.connect(self.validateTeamName)
+        self.player1.textEdited.connect(self.updatePlayerName)
+        self.player2.textEdited.connect(self.updatePlayerName)
+        self.player3.textEdited.connect(self.updatePlayerName)
+        self.player4.textEdited.connect(self.updatePlayerName)
+        self.vp1.textEdited.connect(self.recalcAll)
+        self.vp2.textEdited.connect(self.recalcAll)
+        self.vp3.textEdited.connect(self.recalcAll)
+        self.vp4.textEdited.connect(self.recalcAll)
+        self.m1.textEdited.connect(self.recalcAll)
+        self.m2.textEdited.connect(self.recalcAll)
+        self.m3.textEdited.connect(self.recalcAll)
+        self.m4.textEdited.connect(self.recalcAll)
+        self.mvp1.textEdited.connect(self.recalcAll)
+        self.mvp2.textEdited.connect(self.recalcAll)
+        self.mvp3.textEdited.connect(self.recalcAll)
+        self.mvp4.textEdited.connect(self.recalcAll)
+
+    def updatePlayerName(self):
+        for team in Team.teams:
+            if self in team.cards:
+                for card in team.cards:
+                    if card != self:
+                        card.player1.setText(self.player1.text())
+                        card.player2.setText(self.player2.text())
+                        card.player3.setText(self.player3.text())
+                        card.player4.setText(self.player4.text())
+
+    def validateTeamName(self):
+        nameSet = False
+        name = self.teamName.text()
+        while not nameSet:
+            nameFound = False
+            for team in Team.teams:
+                if not self in team.cards:
+                    if name == team.cards[0].teamName.text():
+                        name = name + 'x'
+                        nameFound = True
+
+            if not nameFound:
+                nameSet = True
+
+        for team in Team.teams:
+            if self in team.cards:
+                team.name = name
+                for card in team.cards:
+                    card.teamName.setText(name)
 
     def recalcAll(self):
         if self.vp1.text() and self.mvp1.text():
@@ -247,6 +284,7 @@ class Ui_MainWindow(QMainWindow):
         self.cards3 = []
         self.cards4 = []
         self.cards5 = []
+        self.allCards = [self.cards1, self.cards2, self.cards3, self.cards4, self.cards5]
         self.setStyleSheet("color: rgb(158, 158, 158);\nbackground-color: rgb(50, 50, 50);")
         self.setWindowTitle("Marc's Warhammer Ranker")
         self.setWindowIcon(QtGui.QIcon('icon.png'))
@@ -268,9 +306,17 @@ class Ui_MainWindow(QMainWindow):
         self.horizontalLayout1 = QtWidgets.QHBoxLayout()
         self.horizontalLayout1.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
         self.spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.vertSpacer1 = QtWidgets.QSpacerItem(810, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.vertSpacer2 = QtWidgets.QSpacerItem(60, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.vertSpacer3 = QtWidgets.QSpacerItem(837, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.vertSpacer4 = QtWidgets.QSpacerItem(30, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout1.addItem(self.spacerItem)
-        self.pushButton = QtWidgets.QPushButton(self.verticalLayoutWidget1)
-        self.horizontalLayout1.addWidget(self.pushButton)
+        self.addTeamButton = QtWidgets.QPushButton()
+        self.endRoundButton1 = QtWidgets.QPushButton()
+        self.horizontalLayout1.addWidget(self.addTeamButton)
+        self.horizontalLayout1.addItem(self.vertSpacer1)
+        self.horizontalLayout1.addWidget(self.endRoundButton1)
+        self.horizontalLayout1.addItem(self.vertSpacer2)
         self.verticalLayout1.addLayout(self.horizontalLayout1)
         self.scrollArea1 = QScrollArea(self)
         self.scrollArea1.setWidgetResizable(True)
@@ -365,7 +411,7 @@ class Ui_MainWindow(QMainWindow):
         self.verticalLayout5.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout5 = QtWidgets.QHBoxLayout()
         self.horizontalLayout5.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
-        self.spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.spacerItem = QtWidgets.QSpacerItem(40, 29, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout5.addItem(self.spacerItem)
         self.verticalLayout5.addLayout(self.horizontalLayout5)
         self.scrollArea5 = QScrollArea(self)
@@ -378,6 +424,8 @@ class Ui_MainWindow(QMainWindow):
         self.gridLayout5 = QtWidgets.QGridLayout(self.scrollWidget5)
         self.verticalLayout5.addWidget(self.scrollArea5)
         self.verticalLayout5.setStretch(1, 1)
+        self.gridLayouts = [self.gridLayout1, self.gridLayout2, self.gridLayout3, self.gridLayout4, self.gridLayout5]
+        self.scrollWidgets = [self.scrollWidget1, self.scrollWidget2, self.scrollWidget3, self.scrollWidget4, self.scrollWidget5]
         self.tabWidget.addTab(self.round1, "")
         self.tabWidget.addTab(self.round2, "")
         self.tabWidget.addTab(self.round3, "")
@@ -423,15 +471,38 @@ class Ui_MainWindow(QMainWindow):
         self.loadXML()
         self.tabWidget.addTab(self.results, "")
         #self.tabWidget.currentChanged.connect(self.updateResults)
-        self.show()
-        self.pushButton.setText("Add Card")
-        self.pushButton.clicked.connect(self.addNewTeam)
+        self.endRoundButton2 = QtWidgets.QPushButton()
+        self.horizontalLayout2.addItem(self.vertSpacer3)
+        self.horizontalLayout2.addWidget(self.endRoundButton2)
+        self.horizontalLayout2.addItem(self.vertSpacer4)
+        self.endRoundButton3 = QtWidgets.QPushButton()
+        self.horizontalLayout3.addItem(self.vertSpacer3)
+        self.horizontalLayout3.addWidget(self.endRoundButton3)
+        self.horizontalLayout3.addItem(self.vertSpacer4)
+        self.endRoundButton4 = QtWidgets.QPushButton()
+        self.horizontalLayout4.addItem(self.vertSpacer3)
+        self.horizontalLayout4.addWidget(self.endRoundButton4)
+        self.horizontalLayout4.addItem(self.vertSpacer4)
+        self.endRoundButton1.setText("End Round 1")
+        self.endRoundButton1.clicked.connect(self.endRound)
+        self.addTeamButton.setText("Add Team")
+        self.addTeamButton.clicked.connect(self.addNewTeam)
+        self.endRoundButton2.setText("End Round 2")
+        self.endRoundButton2.clicked.connect(self.endRound)
+        self.endRoundButton3.setText("End Round 3")
+        self.endRoundButton3.clicked.connect(self.endRound)
+        self.endRoundButton4.setText("End Round 4")
+        self.endRoundButton4.clicked.connect(self.endRound)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round1), "Round 1")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round2), "Round 2")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round3), "Round 3")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round4), "Round 4")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round5), "Round 5")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.results), "Results")
+        self.show()
+
+    def endRound(self):
+        print(self.sender())
 
     def addNewTeam(self):
         teamCount = len(Team.teams)
@@ -449,138 +520,170 @@ class Ui_MainWindow(QMainWindow):
         self.scrollWidget1.setFixedHeight(200*ceil((teamCount+1)/2) + 10)
         return team.cards[0]
 
+    def addNewCardFromXML(self, XMLname, rnd):
+        card = Card()
+        self.allCards[rnd].append(card)
+        for team in Team.teams:
+            if team.name == XMLname:
+                team.cards.append(card)
+        cardsCount = len(self.allCards[rnd])-1
+        self.gridLayouts[rnd].addWidget(card, int(cardsCount/2), int(cardsCount%2))
+        self.scrollWidgets[rnd].setFixedHeight(200*ceil((cardsCount+1)/2) + 10)
+        return card
+
+    def lockOldCards(self):
+        for rnd in range(len(self.allCards)-1):
+            if self.allCards[rnd+1]:
+                self.addTeamButton.setEnabled(0)
+                for card in self.allCards[rnd]:
+                    for field in card.allEditableFields:
+                        field.setEnabled(0)
+                if rnd == 1:
+                    self.endRoundButton1.setEnabled(0)
+                elif rnd == 2:
+                    self.endRoundButton2.setEnabled(0)
+                elif rnd == 3:
+                    self.endRoundButton3.setEnabled(0)
+                elif rnd == 4:
+                    self.endRoundButton4.setEnabled(0)
+
     def loadXML(self):
         dataFile = os.path.join(os.getcwd(), 'data.dat')
         if os.path.exists(dataFile):
             with open(dataFile, 'r') as file:
                 tree = etree.parse(file)
-                allCards = tree.xpath('//Cards/Round')
-                for rnd in allCards:
-                    team = rnd.getchildren()[0]
-                    t = self.addNewTeamFromXML(team.text)
-                    t.teamName.setText(team.text)
-                    t.player1.setText(team.getchildren()[0].text)
-                    t.player2.setText(team.getchildren()[1].text)
-                    t.player3.setText(team.getchildren()[2].text)
-                    t.player4.setText(team.getchildren()[3].text)
-                    t.vp1.setText(team.getchildren()[0].getchildren()[0].text)
-                    t.m1.setText(team.getchildren()[0].getchildren()[1].text)
-                    t.mvp1.setText(team.getchildren()[0].getchildren()[2].text)
-                    t.uc1.setText(team.getchildren()[0].getchildren()[3].text)
-                    t.ca1.setText(team.getchildren()[0].getchildren()[4].text)
-                    t.vp2.setText(team.getchildren()[1].getchildren()[0].text)
-                    t.m2.setText(team.getchildren()[1].getchildren()[1].text)
-                    t.mvp2.setText(team.getchildren()[1].getchildren()[2].text)
-                    t.uc2.setText(team.getchildren()[1].getchildren()[3].text)
-                    t.ca2.setText(team.getchildren()[1].getchildren()[4].text)
-                    t.vp3.setText(team.getchildren()[2].getchildren()[0].text)
-                    t.m3.setText(team.getchildren()[2].getchildren()[1].text)
-                    t.mvp3.setText(team.getchildren()[2].getchildren()[2].text)
-                    t.uc3.setText(team.getchildren()[2].getchildren()[3].text)
-                    t.ca3.setText(team.getchildren()[2].getchildren()[4].text)
-                    t.vp4.setText(team.getchildren()[3].getchildren()[0].text)
-                    t.m4.setText(team.getchildren()[3].getchildren()[1].text)
-                    t.mvp4.setText(team.getchildren()[3].getchildren()[2].text)
-                    t.uc4.setText(team.getchildren()[3].getchildren()[3].text)
-                    t.ca4.setText(team.getchildren()[3].getchildren()[4].text)
-                    t.res1.setText(team.getchildren()[4].text)
-                    t.res2.setText(team.getchildren()[5].text)
-                    t.res3.setText(team.getchildren()[6].text)
+                allRounds = tree.xpath('//Cards/Round')
+                for curRound in allRounds:
+                    for team in curRound:
+                        if curRound.text == '1':
+                            t = self.addNewTeamFromXML(team.text)
+                        else:
+                            t = self.addNewCardFromXML(team.text, int(curRound.text) - 1)
+                        t.teamName.setText(team.text)
+                        t.player1.setText(team.getchildren()[0].text)
+                        t.player2.setText(team.getchildren()[1].text)
+                        t.player3.setText(team.getchildren()[2].text)
+                        t.player4.setText(team.getchildren()[3].text)
+                        t.vp1.setText(team.getchildren()[0].getchildren()[0].text)
+                        t.m1.setText(team.getchildren()[0].getchildren()[1].text)
+                        t.mvp1.setText(team.getchildren()[0].getchildren()[2].text)
+                        t.uc1.setText(team.getchildren()[0].getchildren()[3].text)
+                        t.ca1.setText(team.getchildren()[0].getchildren()[4].text)
+                        t.vp2.setText(team.getchildren()[1].getchildren()[0].text)
+                        t.m2.setText(team.getchildren()[1].getchildren()[1].text)
+                        t.mvp2.setText(team.getchildren()[1].getchildren()[2].text)
+                        t.uc2.setText(team.getchildren()[1].getchildren()[3].text)
+                        t.ca2.setText(team.getchildren()[1].getchildren()[4].text)
+                        t.vp3.setText(team.getchildren()[2].getchildren()[0].text)
+                        t.m3.setText(team.getchildren()[2].getchildren()[1].text)
+                        t.mvp3.setText(team.getchildren()[2].getchildren()[2].text)
+                        t.uc3.setText(team.getchildren()[2].getchildren()[3].text)
+                        t.ca3.setText(team.getchildren()[2].getchildren()[4].text)
+                        t.vp4.setText(team.getchildren()[3].getchildren()[0].text)
+                        t.m4.setText(team.getchildren()[3].getchildren()[1].text)
+                        t.mvp4.setText(team.getchildren()[3].getchildren()[2].text)
+                        t.uc4.setText(team.getchildren()[3].getchildren()[3].text)
+                        t.ca4.setText(team.getchildren()[3].getchildren()[4].text)
+                        t.res1.setText(team.getchildren()[4].text)
+                        t.res2.setText(team.getchildren()[5].text)
+                        t.res3.setText(team.getchildren()[6].text)
+
+        self.lockOldCards()
 
     def writeXML(self):
         dataFile = os.path.join(os.getcwd(), 'data.dat')
         root = etree.Element('Cards')
         try:
             with open(dataFile, 'w') as file:
-                for card in self.cards1:
+                for i in range(len(self.allCards)):
                     roundCount = etree.Element('Round')
-                    roundCount.text = str(1)
+                    roundCount.text = str(i+1)
+                    for card in self.allCards[i]:
+                        team = etree.SubElement(roundCount, 'TeamName')
+                        team.text = card.teamName.text()
 
-                    team = etree.SubElement(roundCount, 'TeamName')
-                    team.text = card.teamName.text()
+                        player1 = etree.SubElement(team, 'Player1')
+                        player1.text = card.player1.text()
 
-                    player1 = etree.SubElement(team, 'Player1')
-                    player1.text = card.player1.text()
+                        vp1 = etree.SubElement(player1, 'VP')
+                        vp1.text = card.vp1.text()
 
-                    vp1 = etree.SubElement(player1, 'VP')
-                    vp1.text = card.vp1.text()
+                        m1 = etree.SubElement(player1, 'Mission')
+                        m1.text = card.m1.text()
 
-                    m1 = etree.SubElement(player1, 'Mission')
-                    m1.text = card.m1.text()
+                        mvp1 = etree.SubElement(player1, 'MissionVP')
+                        mvp1.text = card.mvp1.text()
 
-                    mvp1 = etree.SubElement(player1, 'MissionVP')
-                    mvp1.text = card.mvp1.text()
+                        unc1 = etree.SubElement(player1, 'Uncapped')
+                        unc1.text = card.uc1.text()
 
-                    unc1 = etree.SubElement(player1, 'Uncapped')
-                    unc1.text = card.uc1.text()
+                        cap1 = etree.SubElement(player1, 'Capped')
+                        cap1.text = card.ca1.text()
 
-                    cap1 = etree.SubElement(player1, 'Capped')
-                    cap1.text = card.ca1.text()
+                        player2 = etree.SubElement(team, 'Player2')
+                        player2.text = card.player2.text()
 
-                    player2 = etree.SubElement(team, 'Player2')
-                    player2.text = card.player2.text()
+                        vp2 = etree.SubElement(player2, 'VP')
+                        vp2.text = card.vp2.text()
 
-                    vp2 = etree.SubElement(player2, 'VP')
-                    vp2.text = card.vp2.text()
+                        m2 = etree.SubElement(player2, 'Mission')
+                        m2.text = card.m2.text()
 
-                    m2 = etree.SubElement(player2, 'Mission')
-                    m2.text = card.m2.text()
+                        mvp2 = etree.SubElement(player2, 'MissionVP')
+                        mvp2.text = card.mvp2.text()
 
-                    mvp2 = etree.SubElement(player2, 'MissionVP')
-                    mvp2.text = card.mvp2.text()
+                        unc2 = etree.SubElement(player2, 'Uncapped')
+                        unc2.text = card.uc2.text()
 
-                    unc2 = etree.SubElement(player2, 'Uncapped')
-                    unc2.text = card.uc2.text()
+                        cap2 = etree.SubElement(player2, 'Capped')
+                        cap2.text = card.ca2.text()
 
-                    cap2 = etree.SubElement(player2, 'Capped')
-                    cap2.text = card.ca2.text()
+                        player3 = etree.SubElement(team, 'Player3')
+                        player3.text = card.player3.text()
 
-                    player3 = etree.SubElement(team, 'Player3')
-                    player3.text = card.player3.text()
+                        vp3 = etree.SubElement(player3, 'VP')
+                        vp3.text = card.vp3.text()
 
-                    vp3 = etree.SubElement(player3, 'VP')
-                    vp3.text = card.vp3.text()
+                        m3 = etree.SubElement(player3, 'Mission')
+                        m3.text = card.m3.text()
 
-                    m3 = etree.SubElement(player3, 'Mission')
-                    m3.text = card.m3.text()
+                        mvp3 = etree.SubElement(player3, 'MissionVP')
+                        mvp3.text = card.mvp3.text()
 
-                    mvp3 = etree.SubElement(player3, 'MissionVP')
-                    mvp3.text = card.mvp3.text()
+                        unc3 = etree.SubElement(player3, 'Uncapped')
+                        unc3.text = card.uc3.text()
 
-                    unc3 = etree.SubElement(player3, 'Uncapped')
-                    unc3.text = card.uc3.text()
+                        cap3 = etree.SubElement(player3, 'Capped')
+                        cap3.text = card.ca3.text()
 
-                    cap3 = etree.SubElement(player3, 'Capped')
-                    cap3.text = card.ca3.text()
+                        player4 = etree.SubElement(team, 'Player4')
+                        player4.text = card.player4.text()
 
-                    player4 = etree.SubElement(team, 'Player4')
-                    player4.text = card.player4.text()
+                        vp4 = etree.SubElement(player4, 'VP')
+                        vp4.text = card.vp4.text()
 
-                    vp4 = etree.SubElement(player4, 'VP')
-                    vp4.text = card.vp4.text()
+                        m4 = etree.SubElement(player4, 'Mission')
+                        m4.text = card.m4.text()
 
-                    m4 = etree.SubElement(player4, 'Mission')
-                    m4.text = card.m4.text()
+                        mvp4 = etree.SubElement(player4, 'MissionVP')
+                        mvp4.text = card.mvp4.text()
 
-                    mvp4 = etree.SubElement(player4, 'MissionVP')
-                    mvp4.text = card.mvp4.text()
+                        unc4 = etree.SubElement(player4, 'Uncapped')
+                        unc4.text = card.uc4.text()
 
-                    unc4 = etree.SubElement(player4, 'Uncapped')
-                    unc4.text = card.uc4.text()
+                        cap4 = etree.SubElement(player4, 'Capped')
+                        cap4.text = card.ca4.text()
 
-                    cap4 = etree.SubElement(player4, 'Capped')
-                    cap4.text = card.ca4.text()
+                        res1 = etree.SubElement(team, 'Res1')
+                        res1.text = card.res1.text()
 
-                    res1 = etree.SubElement(team, 'Res1')
-                    res1.text = card.res1.text()
+                        res2 = etree.SubElement(team, 'Res2')
+                        res2.text = card.res2.text()
 
-                    res2 = etree.SubElement(team, 'Res2')
-                    res2.text = card.res2.text()
+                        res3 = etree.SubElement(team, 'Res3')
+                        res3.text = card.res3.text()
 
-                    res3 = etree.SubElement(team, 'Res3')
-                    res3.text = card.res3.text()
-
-                    root.append(roundCount)
+                        root.append(roundCount)
 
                 s = etree.tostring(root, pretty_print=True)
                 file.write(s.decode('ASCII'))
