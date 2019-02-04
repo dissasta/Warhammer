@@ -11,6 +11,7 @@ class Team():
         Team.teams.append(self)
         self.cards = []
         self.cards.append(Card())
+        self.oponents = []
 
 class Card(QWidget):
     def __init__(self):
@@ -182,9 +183,17 @@ class Card(QWidget):
 
         for team in Team.teams:
             if self in team.cards:
+                currentName = team.name
                 team.name = name
                 for card in team.cards:
                     card.teamName.setText(name)
+
+        for team in Team.teams:
+            if not self in team.cards:
+                if currentName in team.oponents:
+                    print(team.oponents)
+                    team.oponents[team.oponents.index(currentName)] = name
+                    print(team.oponents)
 
     def recalcAll(self):
         if self.vp1.text() and self.mvp1.text():
@@ -468,7 +477,7 @@ class Ui_MainWindow(QMainWindow):
         for i in range(30):
             self.tableWidget.insertRow(i)
         self.tableWidget.resizeRowsToContents()
-        self.loadXML()
+
         self.tabWidget.addTab(self.results, "")
         #self.tabWidget.currentChanged.connect(self.updateResults)
         self.endRoundButton2 = QtWidgets.QPushButton()
@@ -493,58 +502,152 @@ class Ui_MainWindow(QMainWindow):
         self.endRoundButton3.clicked.connect(self.endRound)
         self.endRoundButton4.setText("End Round 4")
         self.endRoundButton4.clicked.connect(self.endRound)
+        self.allEndRoundButtons = [self.endRoundButton1, self.endRoundButton2, self.endRoundButton3, self.endRoundButton4]
+        for i in range(1,4):
+            self.allEndRoundButtons[i].setEnabled(0)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round1), "Round 1")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round2), "Round 2")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round3), "Round 3")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round4), "Round 4")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.round5), "Round 5")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.results), "Results")
+        self.loadXML()
         self.show()
 
     def endRound(self):
-        print(self.sender())
+        buttonIndex = self.allEndRoundButtons.index(self.sender())
+        for card in self.allCards[buttonIndex]:
+            for field in card.allEditableFields:
+                field.setEnabled(0)
+        if buttonIndex < len(self.allEndRoundButtons) - 1:
+            self.allEndRoundButtons[buttonIndex + 1].setEnabled(1)
+            self.allEndRoundButtons[buttonIndex].setEnabled(0)
+        elif buttonIndex == len(self.allEndRoundButtons) - 1:
+            self.allEndRoundButtons[buttonIndex].setEnabled(0)
+
+        newCards = self.shuffleCards(buttonIndex)
+        nextRoundOrder = []
+        for t in range(len(newCards)):
+            if newCards[t] != 'x':
+                for o in range(len(newCards)):
+                    if newCards[o] != 'x':
+                        if newCards[t] != newCards[o]:
+                            for team in Team.teams:
+                                if newCards[t][0]  == team.name:
+                                    if newCards[o][0] not in team.oponents:
+                                        team.oponents.append(newCards[o][0])
+                                        for oponent in Team.teams:
+                                            if newCards[o][0] == oponent.name:
+                                                oponent.oponents.append(newCards[t][0])
+                                                nextRoundOrder.append(newCards[t])
+                                                nextRoundOrder.append(newCards[o])
+                                                newCards[t] = 'x'
+                                                newCards[o] = 'x'
+                                                break
+
+        for team in nextRoundOrder:
+            self.addNewCardForNextRound(team[0], buttonIndex + 1)
+
+    def shuffleCards(self, rnd):
+        unsorted = []
+        for card in self.allCards[rnd]:
+            mvp = 0
+            uc = 0
+            ca = 0
+            if card.res1.text():
+                mvp = int(card.res1.text())
+            if card.res2.text():
+                uc = int(card.res2.text())
+            if card.res3.text():
+                ca = int(card.res3.text())
+            unsorted.append((card.teamName.text(), mvp, uc, ca))
+
+        sortedResults = sorted(unsorted, key=lambda x: (-x[3], -x[2], -x[1], x[0]))
+        print(sortedResults)
+        return sortedResults
+
+    def stackOponents(self, idx):
+        Team.teams[idx - 1].oponents.append(Team.teams[idx].name)
+        Team.teams[idx].oponents.append(Team.teams[idx - 1].name)
+
+    def validateTeamName(self, name):
+        nameSet = False
+        while not nameSet:
+            nameFound = False
+            for team in Team.teams:
+                if name == team.name:
+                    name = name + 'x'
+                    nameFound = True
+
+            if not nameFound:
+                nameSet = True
+        return name
 
     def addNewTeam(self):
         teamCount = len(Team.teams)
         if teamCount < 30:
-            team = Team('')
+            name = self.validateTeamName('Team ' + str(teamCount + 1))
+            team = Team(name)
             self.cards1.append(team.cards[0])
+            self.cards1[-1].teamName.setText(name)
             self.gridLayout1.addWidget(team.cards[0], int(teamCount/2), int(teamCount%2))
             self.scrollWidget1.setFixedHeight(200*ceil((teamCount+1)/2) + 10)
+            if len(Team.teams) % 2 == 0:
+                self.stackOponents(len(Team.teams)-1)
 
-    def addNewTeamFromXML(self, name):
+    def addNewTeamFromXML(self, name, oponent):
         team = Team(name)
-        teamCount = len(Team.teams)-1
+        team.oponents.append(oponent)
+        teamCount = len(Team.teams) - 1
         self.cards1.append(team.cards[0])
         self.gridLayout1.addWidget(team.cards[0], int(teamCount/2), int(teamCount%2))
         self.scrollWidget1.setFixedHeight(200*ceil((teamCount+1)/2) + 10)
         return team.cards[0]
 
-    def addNewCardFromXML(self, XMLname, rnd):
+    def addNewCardFromXML(self, XMLname, rnd, oponent):
         card = Card()
         self.allCards[rnd].append(card)
         for team in Team.teams:
             if team.name == XMLname:
                 team.cards.append(card)
-        cardsCount = len(self.allCards[rnd])-1
+                team.oponents.append(oponent)
+        cardsCount = len(self.allCards[rnd]) - 1
         self.gridLayouts[rnd].addWidget(card, int(cardsCount/2), int(cardsCount%2))
         self.scrollWidgets[rnd].setFixedHeight(200*ceil((cardsCount+1)/2) + 10)
         return card
 
+    def addNewCardForNextRound(self, name, rnd):
+        card = Card()
+        card.teamName.setText(name)
+        self.allCards[rnd].append(card)
+        for team in Team.teams:
+            if team.name == name:
+                team.cards.append(card)
+                card.player1.setText(team.cards[0].player1.text())
+                card.player2.setText(team.cards[0].player2.text())
+                card.player3.setText(team.cards[0].player3.text())
+                card.player4.setText(team.cards[0].player4.text())
+        cardsCount = len(self.allCards[rnd]) - 1
+        self.gridLayouts[rnd].addWidget(card, int(cardsCount/2), int(cardsCount%2))
+        self.scrollWidgets[rnd].setFixedHeight(200 * ceil((cardsCount + 1) / 2) + 10)
+
     def lockOldCards(self):
         for rnd in range(len(self.allCards)-1):
-            if self.allCards[rnd+1]:
+            if self.allCards[rnd + 1]:
                 self.addTeamButton.setEnabled(0)
                 for card in self.allCards[rnd]:
                     for field in card.allEditableFields:
                         field.setEnabled(0)
-                if rnd == 1:
+                if rnd + 1 == 1:
                     self.endRoundButton1.setEnabled(0)
-                elif rnd == 2:
+                    self.endRoundButton2.setEnabled(1)
+                elif rnd + 1 == 2:
                     self.endRoundButton2.setEnabled(0)
-                elif rnd == 3:
+                    self.endRoundButton3.setEnabled(1)
+                elif rnd + 1 == 3:
                     self.endRoundButton3.setEnabled(0)
-                elif rnd == 4:
+                    self.endRoundButton4.setEnabled(1)
+                elif rnd + 1 == 4:
                     self.endRoundButton4.setEnabled(0)
 
     def loadXML(self):
@@ -555,10 +658,11 @@ class Ui_MainWindow(QMainWindow):
                 allRounds = tree.xpath('//Cards/Round')
                 for curRound in allRounds:
                     for team in curRound:
+                        oponent = team.getchildren()[7].text
                         if curRound.text == '1':
-                            t = self.addNewTeamFromXML(team.text)
+                            t = self.addNewTeamFromXML(team.text, oponent)
                         else:
-                            t = self.addNewCardFromXML(team.text, int(curRound.text) - 1)
+                            t = self.addNewCardFromXML(team.text, int(curRound.text) - 1, oponent)
                         t.teamName.setText(team.text)
                         t.player1.setText(team.getchildren()[0].text)
                         t.player2.setText(team.getchildren()[1].text)
@@ -683,6 +787,12 @@ class Ui_MainWindow(QMainWindow):
                         res3 = etree.SubElement(team, 'Res3')
                         res3.text = card.res3.text()
 
+                        oponent = etree.SubElement(team, 'Oponent')
+
+                        for team in Team.teams:
+                            if card in team.cards:
+                                oponent.text = team.oponents[i]
+
                         root.append(roundCount)
 
                 s = etree.tostring(root, pretty_print=True)
@@ -733,5 +843,6 @@ class Ui_MainWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setStyle('Windows')
     ex = Ui_MainWindow()
     sys.exit(app.exec_())
