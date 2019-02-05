@@ -513,6 +513,7 @@ class Ui_MainWindow(QMainWindow):
         self.show()
 
     def endRound(self):
+        self.addTeamButton.setEnabled(0)
         buttonIndex = self.allEndRoundButtons.index(self.sender())
         for card in self.allCards[buttonIndex]:
             for field in card.allEditableFields:
