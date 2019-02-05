@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QSizePolicy, QSc
 from PyQt5 import QtCore, QtGui, QtWidgets
 from math import ceil
 from lxml import etree
+import time
 
 class Team():
     teams = []
@@ -120,17 +121,20 @@ class Card(QWidget):
         self.res1.setEnabled(False)
         self.res1.setGeometry(QtCore.QRect(270, 170, 51, 20))
         self.res1.setReadOnly(False)
+        self.res1.setText('0')
         self.res1.setStyleSheet("color: black;background-color: rgb(150,150,150)");
         self.res2 = QtWidgets.QLineEdit(self)
         self.res2.setEnabled(False)
         self.res2.setGeometry(QtCore.QRect(340, 170, 51, 20))
         self.res2.setStyleSheet("color: black;background-color: rgb(150,150,150)");
         self.res2.setReadOnly(False)
+        self.res2.setText('0')
         self.res3 = QtWidgets.QLineEdit(self)
         self.res3.setEnabled(False)
         self.res3.setGeometry(QtCore.QRect(410, 170, 51, 20))
         self.res3.setStyleSheet("color: black;background-color: rgb(150,150,150)");
         self.res3.setReadOnly(False)
+        self.res3.setText('0')
         self.label.setText("VP")
         self.label_2.setText("Missions")
         self.label_3.setText("Mission VP")
@@ -191,9 +195,7 @@ class Card(QWidget):
         for team in Team.teams:
             if not self in team.cards:
                 if currentName in team.oponents:
-                    print(team.oponents)
                     team.oponents[team.oponents.index(currentName)] = name
-                    print(team.oponents)
 
     def recalcAll(self):
         if self.vp1.text() and self.mvp1.text():
@@ -248,10 +250,7 @@ class Card(QWidget):
         if self.mvp4.text():
             mvp += int(self.mvp4.text())
 
-        if mvp > 0:
-            self.res1.setText(str(mvp))
-        else:
-            self.res1.clear()
+        self.res1.setText(str(mvp))
 
         uc = 0
 
@@ -264,10 +263,7 @@ class Card(QWidget):
         if self.uc4.text():
             uc += int(self.uc4.text())
 
-        if uc > 0:
-            self.res2.setText(str(uc))
-        else:
-            self.res2.clear()
+        self.res2.setText(str(uc))
 
         ca = 0
 
@@ -280,10 +276,7 @@ class Card(QWidget):
         if self.ca4.text():
             ca += int(self.ca4.text())
 
-        if ca > 0:
-            self.res3.setText(str(ca))
-        else:
-            self.res3.clear()
+        self.res3.setText((str(max(50, min(ca, 100)))))
 
 class Ui_MainWindow(QMainWindow):
     def __init__(self):
@@ -316,9 +309,9 @@ class Ui_MainWindow(QMainWindow):
         self.horizontalLayout1.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
         self.spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.vertSpacer1 = QtWidgets.QSpacerItem(810, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.vertSpacer2 = QtWidgets.QSpacerItem(60, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.vertSpacer3 = QtWidgets.QSpacerItem(837, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.vertSpacer4 = QtWidgets.QSpacerItem(30, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.vertSpacer2 = QtWidgets.QSpacerItem(44, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.vertSpacer3 = QtWidgets.QSpacerItem(848, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.vertSpacer4 = QtWidgets.QSpacerItem(20, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout1.addItem(self.spacerItem)
         self.addTeamButton = QtWidgets.QPushButton()
         self.endRoundButton1 = QtWidgets.QPushButton()
@@ -448,16 +441,18 @@ class Ui_MainWindow(QMainWindow):
         self.setMenuBar(self.menubar)
         self.tabWidget.setCurrentIndex(0)
         self.tableWidget = QtWidgets.QTableWidget(self.results)
-        self.tableWidget.setGeometry(QtCore.QRect(1, 1, 456, 656))
+        self.tableWidget.setGeometry(QtCore.QRect(1, 1, 982, 656))
         self.tableWidget.setColumnCount(4)
+        self.tableWidget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.tableWidget.horizontalHeader().setStyleSheet('color: rgb(150,60,0)')
         font = QtGui.QFont()
-        font.setPointSize(8)
+        font.setPointSize(14)
         item = QtWidgets.QTableWidgetItem()
         item.setText("TEAM")
         item.setFont(font)
         self.tableWidget.setHorizontalHeaderItem(0, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText("MISSION")
+        item.setText("CAPPED")
         item.setFont(font)
         self.tableWidget.setHorizontalHeaderItem(1, item)
         item = QtWidgets.QTableWidgetItem()
@@ -465,21 +460,24 @@ class Ui_MainWindow(QMainWindow):
         item.setFont(font)
         self.tableWidget.setHorizontalHeaderItem(2, item)
         item = QtWidgets.QTableWidgetItem()
-        item.setText("CAPPED")
+        item.setText("MISSION")
         item.setFont(font)
+        self.tableWidget.setFont(font)
         self.tableWidget.setHorizontalHeaderItem(3, item)
-        self.tableWidget.setColumnWidth(0, 220)
-        self.tableWidget.setColumnWidth(1, 70)
-        self.tableWidget.setColumnWidth(2, 70)
-        self.tableWidget.setColumnWidth(3, 70)
+        self.tableWidget.setColumnWidth(0, 280)
+        self.tableWidget.setColumnWidth(1, 90)
+        self.tableWidget.setColumnWidth(2, 110)
+        self.tableWidget.setColumnWidth(3, 104)
         self.tableWidget.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
-        self.tableWidget.setEnabled(False)
+        self.tableWidget.setEnabled(1)
         for i in range(30):
             self.tableWidget.insertRow(i)
         self.tableWidget.resizeRowsToContents()
-
+        self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+        self.tableWidget.setFocusPolicy(QtCore.Qt.NoFocus)
         self.tabWidget.addTab(self.results, "")
-        #self.tabWidget.currentChanged.connect(self.updateResults)
+        self.tabWidget.currentChanged.connect(self.updateResults)
         self.endRoundButton2 = QtWidgets.QPushButton()
         self.horizontalLayout2.addItem(self.vertSpacer3)
         self.horizontalLayout2.addWidget(self.endRoundButton2)
@@ -494,7 +492,7 @@ class Ui_MainWindow(QMainWindow):
         self.horizontalLayout4.addItem(self.vertSpacer4)
         self.endRoundButton1.setText("End Round 1")
         self.endRoundButton1.clicked.connect(self.endRound)
-        self.addTeamButton.setText("Add Team")
+        self.addTeamButton.setText("Add Teams")
         self.addTeamButton.clicked.connect(self.addNewTeam)
         self.endRoundButton2.setText("End Round 2")
         self.endRoundButton2.clicked.connect(self.endRound)
@@ -525,45 +523,75 @@ class Ui_MainWindow(QMainWindow):
         elif buttonIndex == len(self.allEndRoundButtons) - 1:
             self.allEndRoundButtons[buttonIndex].setEnabled(0)
 
-        newCards = self.shuffleCards(buttonIndex)
-        nextRoundOrder = []
-        for t in range(len(newCards)):
-            if newCards[t] != 'x':
-                for o in range(len(newCards)):
-                    if newCards[o] != 'x':
-                        if newCards[t] != newCards[o]:
-                            for team in Team.teams:
-                                if newCards[t][0]  == team.name:
-                                    if newCards[o][0] not in team.oponents:
-                                        team.oponents.append(newCards[o][0])
-                                        for oponent in Team.teams:
-                                            if newCards[o][0] == oponent.name:
-                                                oponent.oponents.append(newCards[t][0])
-                                                nextRoundOrder.append(newCards[t])
-                                                nextRoundOrder.append(newCards[o])
-                                                newCards[t] = 'x'
-                                                newCards[o] = 'x'
-                                                break
+        newCards = self.sortCards()
+        newCardsBck = list(newCards)
+        newCardsOrg = list(newCards)
+        nextRoundReady = False
+        item = None
+        counter = len(newCards) - 1
+        while not nextRoundReady:
+            nextRoundOrder = []
+            for t in range(len(newCards)):
+                if newCards[t] != 'x':
+                    for o in range(len(newCards)):
+                        if newCards[o] != 'x':
+                            if newCards[t] != newCards[o]:
+                                for team in Team.teams:
+                                    if newCards[t][0]  == team.name:
+                                        if newCards[o][0] not in team.oponents:
+                                            #team.oponents.append(newCards[o][0])
+                                            for oponent in Team.teams:
+                                                if newCards[o][0] == oponent.name:
+                                                    #oponent.oponents.append(newCards[t][0])
+                                                    nextRoundOrder.append(newCards[t])
+                                                    nextRoundOrder.append(newCards[o])
+                                                    newCards[t] = 'x'
+                                                    newCards[o] = 'x'
+                                                    break
+            if len(nextRoundOrder) == len(Team.teams):
+                nextRoundReady = True
+            else:
+                newCards = list(newCardsBck)
+                if not item:
+                    item = newCards[counter]
+                curIdx = newCards.index(item)
+                popped = newCards.pop(curIdx)
+                newCards.insert(curIdx - 1, popped)
+                newCardsBck = list(newCards)
+                if curIdx == 0:
+                    counter -= 1
+                    item = None
+                    newCards = list(newCardsOrg)
+                    newCardsBck = list(newCardsOrg)
 
         for team in nextRoundOrder:
             self.addNewCardForNextRound(team[0], buttonIndex + 1)
 
-    def shuffleCards(self, rnd):
+        pairs = [nextRoundOrder[i:i+2] for i in range(0, len(nextRoundOrder), 2)]
+        for pair in pairs:
+            for team in Team.teams:
+                if team.name == pair[0][0]:
+                    team.oponents.append(pair[1][0])
+                elif team.name == pair[1][0]:
+                    team.oponents.append(pair[0][0])
+
+    def sortCards(self):
         unsorted = []
-        for card in self.allCards[rnd]:
+        for team in Team.teams:
             mvp = 0
             uc = 0
             ca = 0
-            if card.res1.text():
-                mvp = int(card.res1.text())
-            if card.res2.text():
-                uc = int(card.res2.text())
-            if card.res3.text():
-                ca = int(card.res3.text())
-            unsorted.append((card.teamName.text(), mvp, uc, ca))
+            for card in team.cards:
+                if card.res1.text():
+                    mvp += int(card.res1.text())
+                if card.res2.text():
+                    uc += int(card.res2.text())
+                if card.res3.text():
+                    ca += int(card.res3.text())
+
+            unsorted.append((team.name, mvp, uc, ca))
 
         sortedResults = sorted(unsorted, key=lambda x: (-x[3], -x[2], -x[1], x[0]))
-        print(sortedResults)
         return sortedResults
 
     def stackOponents(self, idx):
@@ -584,16 +612,17 @@ class Ui_MainWindow(QMainWindow):
         return name
 
     def addNewTeam(self):
-        teamCount = len(Team.teams)
-        if teamCount < 30:
-            name = self.validateTeamName('Team ' + str(teamCount + 1))
-            team = Team(name)
-            self.cards1.append(team.cards[0])
-            self.cards1[-1].teamName.setText(name)
-            self.gridLayout1.addWidget(team.cards[0], int(teamCount/2), int(teamCount%2))
-            self.scrollWidget1.setFixedHeight(200*ceil((teamCount+1)/2) + 10)
-            if len(Team.teams) % 2 == 0:
-                self.stackOponents(len(Team.teams)-1)
+        for i in range(2):
+            teamCount = len(Team.teams)
+            if teamCount < 30:
+                name = self.validateTeamName('Team ' + str(teamCount + 1))
+                team = Team(name)
+                self.cards1.append(team.cards[0])
+                self.cards1[-1].teamName.setText(name)
+                self.gridLayout1.addWidget(team.cards[0], int(teamCount/2), int(teamCount%2))
+                self.scrollWidget1.setFixedHeight(200*ceil((teamCount+1)/2) + 10)
+                if len(Team.teams) % 2 == 0:
+                    self.stackOponents(len(Team.teams)-1)
 
     def addNewTeamFromXML(self, name, oponent):
         team = Team(name)
@@ -825,16 +854,12 @@ class Ui_MainWindow(QMainWindow):
         return results
 
     def updateResults(self):
-        results = self.sortResults()
-        sortedResults = sorted(results, key=lambda x: (-x[3], -x[2], -x[1], x[0]))
+        sortedResults = self.sortCards()
         for entry in range(len(sortedResults)):
             self.tableWidget.setItem(entry, 0, QtWidgets.QTableWidgetItem(sortedResults[entry][0]))
-            if sortedResults[entry][1] != 0:
-                self.tableWidget.setItem(entry, 1, QtWidgets.QTableWidgetItem(str(sortedResults[entry][1])))
-            if sortedResults[entry][2] != 0:
-                self.tableWidget.setItem(entry, 2, QtWidgets.QTableWidgetItem(str(sortedResults[entry][2])))
-            if sortedResults[entry][3] != 0:
-                self.tableWidget.setItem(entry, 3, QtWidgets.QTableWidgetItem(str(sortedResults[entry][3])))
+            self.tableWidget.setItem(entry, 1, QtWidgets.QTableWidgetItem(str(sortedResults[entry][3])))
+            self.tableWidget.setItem(entry, 2, QtWidgets.QTableWidgetItem(str(sortedResults[entry][2])))
+            self.tableWidget.setItem(entry, 3, QtWidgets.QTableWidgetItem(str(sortedResults[entry][1])))
 
     def closeEvent(self, e):
         self.writeXML()
