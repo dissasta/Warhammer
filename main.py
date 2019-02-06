@@ -1,5 +1,5 @@
 import sys, os
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QSizePolicy, QScrollArea
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QSizePolicy, QScrollArea, QMessageBox, QPushButton
 from PyQt5 import QtCore, QtGui, QtWidgets
 from math import ceil
 from lxml import etree
@@ -142,6 +142,7 @@ class Card(QWidget):
         self.label_5.setText("Capped")
 
         self.allEditableFields = [self.teamName, self.player1, self.player2, self.player3, self.player4, self.vp1, self.vp2, self.vp3, self.vp4, self.m1, self.m2, self.m3, self.m4, self.mvp1, self.mvp2, self.mvp3, self.mvp4]
+        self.allUpdatableFields = [self.vp1, self.vp2, self.vp3, self.vp4, self.m1, self.m2, self.m3, self.m4, self.mvp1, self.mvp2, self.mvp3, self.mvp4]
 
         self.teamName.textEdited.connect(self.validateTeamName)
         self.player1.textEdited.connect(self.updatePlayerName)
@@ -170,6 +171,11 @@ class Card(QWidget):
                         card.player2.setText(self.player2.text())
                         card.player3.setText(self.player3.text())
                         card.player4.setText(self.player4.text())
+
+    def validateUpdatableFields(self):
+        for field in self.allUpdatableFields:
+            if field.text():
+                field.setStyleSheet("color: rgb(158, 158, 158);\nbackground-color: rgb(150,60,0);")
 
     def validateTeamName(self):
         nameSet = False
@@ -277,6 +283,11 @@ class Card(QWidget):
             ca += int(self.ca4.text())
 
         self.res3.setText((str(max(50, min(ca, 100)))))
+
+        if self.sender().text():
+            self.sender().setStyleSheet("color: rgb(158, 158, 158);\nbackground-color: rgb(150,60,0);")
+        else:
+            self.sender().setStyleSheet("color: rgb(158, 158, 158);\nbackground-color: rgb(100, 50, 50);")
 
 class Ui_MainWindow(QMainWindow):
     def __init__(self):
@@ -513,68 +524,84 @@ class Ui_MainWindow(QMainWindow):
         self.show()
 
     def endRound(self):
-        self.addTeamButton.setEnabled(0)
-        buttonIndex = self.allEndRoundButtons.index(self.sender())
-        for card in self.allCards[buttonIndex]:
-            for field in card.allEditableFields:
-                field.setEnabled(0)
-        if buttonIndex < len(self.allEndRoundButtons) - 1:
-            self.allEndRoundButtons[buttonIndex + 1].setEnabled(1)
-            self.allEndRoundButtons[buttonIndex].setEnabled(0)
-        elif buttonIndex == len(self.allEndRoundButtons) - 1:
-            self.allEndRoundButtons[buttonIndex].setEnabled(0)
+        if len(Team.teams) < 6:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+            msg.setText("You need to add more teams.")
+            msg.exec()
+        else:
+            msg = QMessageBox()
+            msg.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+            msg.setText("Are you absolutely sure?\nNo going back after this!")
+            msg.addButton(QPushButton('YES'), QMessageBox.AcceptRole)
+            msg.addButton(QPushButton('NO'), QMessageBox.RejectRole)
+            msg.exec_()
+            if msg.clickedButton().text() == 'YES':
+                self.addTeamButton.setEnabled(0)
+                buttonIndex = self.allEndRoundButtons.index(self.sender())
+                for card in self.allCards[buttonIndex]:
+                    for field in card.allEditableFields:
+                        field.setEnabled(0)
+                if buttonIndex < len(self.allEndRoundButtons) - 1:
+                    self.allEndRoundButtons[buttonIndex + 1].setEnabled(1)
+                    self.allEndRoundButtons[buttonIndex].setEnabled(0)
+                elif buttonIndex == len(self.allEndRoundButtons) - 1:
+                    self.allEndRoundButtons[buttonIndex].setEnabled(0)
 
-        newCards = self.sortCards()
-        newCardsBck = list(newCards)
-        newCardsOrg = list(newCards)
-        nextRoundReady = False
-        item = None
-        counter = len(newCards) - 1
-        while not nextRoundReady:
-            nextRoundOrder = []
-            for t in range(len(newCards)):
-                if newCards[t] != 'x':
-                    for o in range(len(newCards)):
-                        if newCards[o] != 'x':
-                            if newCards[t] != newCards[o]:
-                                for team in Team.teams:
-                                    if newCards[t][0]  == team.name:
-                                        if newCards[o][0] not in team.oponents:
-                                            #team.oponents.append(newCards[o][0])
-                                            for oponent in Team.teams:
-                                                if newCards[o][0] == oponent.name:
-                                                    #oponent.oponents.append(newCards[t][0])
-                                                    nextRoundOrder.append(newCards[t])
-                                                    nextRoundOrder.append(newCards[o])
-                                                    newCards[t] = 'x'
-                                                    newCards[o] = 'x'
-                                                    break
-            if len(nextRoundOrder) == len(Team.teams):
-                nextRoundReady = True
-            else:
-                newCards = list(newCardsBck)
-                if not item:
-                    item = newCards[counter]
-                curIdx = newCards.index(item)
-                popped = newCards.pop(curIdx)
-                newCards.insert(curIdx - 1, popped)
+                newCards = self.sortCards()
                 newCardsBck = list(newCards)
-                if curIdx == 0:
-                    counter -= 1
-                    item = None
-                    newCards = list(newCardsOrg)
-                    newCardsBck = list(newCardsOrg)
+                newCardsOrg = list(newCards)
+                nextRoundReady = False
+                item = None
+                counter = len(newCards) - 1
+                while not nextRoundReady:
+                    nextRoundOrder = []
+                    for t in range(len(newCards)):
+                        if newCards[t] != 'x':
+                            for o in range(len(newCards)):
+                                if newCards[o] != 'x':
+                                    if newCards[t] != newCards[o]:
+                                        for team in Team.teams:
+                                            if newCards[t][0]  == team.name:
+                                                if newCards[o][0] not in team.oponents:
+                                                    #team.oponents.append(newCards[o][0])
+                                                    for oponent in Team.teams:
+                                                        if newCards[o][0] == oponent.name:
+                                                            #oponent.oponents.append(newCards[t][0])
+                                                            nextRoundOrder.append(newCards[t])
+                                                            nextRoundOrder.append(newCards[o])
+                                                            newCards[t] = 'x'
+                                                            newCards[o] = 'x'
+                                                            break
+                    if len(nextRoundOrder) == len(Team.teams):
+                        nextRoundReady = True
+                    else:
+                        newCards = list(newCardsBck)
+                        if not item:
+                            item = newCards[counter]
+                        curIdx = newCards.index(item)
+                        popped = newCards.pop(curIdx)
+                        newCards.insert(curIdx - 1, popped)
+                        newCardsBck = list(newCards)
+                        if curIdx == 0:
+                            counter -= 1
+                            item = None
+                            newCards = list(newCardsOrg)
+                            newCardsBck = list(newCardsOrg)
 
-        for team in nextRoundOrder:
-            self.addNewCardForNextRound(team[0], buttonIndex + 1)
+                for team in nextRoundOrder:
+                    self.addNewCardForNextRound(team[0], buttonIndex + 1)
 
-        pairs = [nextRoundOrder[i:i+2] for i in range(0, len(nextRoundOrder), 2)]
-        for pair in pairs:
-            for team in Team.teams:
-                if team.name == pair[0][0]:
-                    team.oponents.append(pair[1][0])
-                elif team.name == pair[1][0]:
-                    team.oponents.append(pair[0][0])
+                pairs = [nextRoundOrder[i:i+2] for i in range(0, len(nextRoundOrder), 2)]
+                for pair in pairs:
+                    for team in Team.teams:
+                        if team.name == pair[0][0]:
+                            team.oponents.append(pair[1][0])
+                        elif team.name == pair[1][0]:
+                            team.oponents.append(pair[0][0])
+
+                self.writeXML()
 
     def sortCards(self):
         unsorted = []
@@ -721,7 +748,7 @@ class Ui_MainWindow(QMainWindow):
                         t.res1.setText(team.getchildren()[4].text)
                         t.res2.setText(team.getchildren()[5].text)
                         t.res3.setText(team.getchildren()[6].text)
-
+                        t.validateUpdatableFields()
         self.lockOldCards()
 
     def writeXML(self):
